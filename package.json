@@ -1,0 +1,30 @@
+{
+  "name": "credito-libranza-bot",
+  "version": "1.0.0",
+  "description": "Bot que lee destinatarios desde Google Sheets y envia por WhatsApp (Cloud API de Meta) una invitacion a asesoria financiera personalizada sobre credito de Libranza.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "send": "node src/index.js",
+    "dry-run": "node src/index.js --dry-run",
+    "server": "node server.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "cloud-api",
+    "google-sheets",
+    "libranza",
+    "asesoria-financiera",
+    "bot"
+  ],
+  "author": "Alejandra Fonseca",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "googleapis": "^144.0.0",
+    "p-limit": "^6.1.0"
+  }
+}
