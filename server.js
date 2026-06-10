@@ -6,7 +6,7 @@ import { google } from "googleapis";
 
 /**
  * ============================================================
- *  SERVIDOR WEBHOOK DEL BOT VANTI LIBRANZA
+ *  SERVIDOR WEBHOOK DEL BOT CREDITO LIBRANZA
  * ============================================================
  *  Este servidor recibe los mensajes entrantes que llegan al
  *  numero de WhatsApp Business via la API de la Nube de Meta.
@@ -233,7 +233,7 @@ app.post("/webhook", async (req, res) => {
 
 // Pagina de inicio para chequeo manual.
 app.get("/", (_req, res) => {
-  res.send("Bot Vanti Libranza activo. Webhook listo. 🚀");
+  res.send("Bot Credito Libranza activo. Webhook listo. 🚀");
 });
 
 // Ruta de salud (la usa UptimeRobot para no dejar dormir el server).
