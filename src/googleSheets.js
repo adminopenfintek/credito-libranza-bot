@@ -18,11 +18,44 @@ import { log } from "./logger.js";
 
 const COLUMNS = ["nombre", "telefono", "estado", "fecha_envio", "detalle"];
 
+/**
+ * Devuelve un cliente autenticado de Google Sheets.
+ *
+ * Detecta automaticamente si esta corriendo en:
+ *  - Local (tu computador): usa el archivo google-credentials.json
+ *  - Render (la nube): usa la variable de entorno GOOGLE_CREDENTIALS_JSON
+ */
 async function getSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: config.sheets.credentialsPath,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  });
+  let authConfig;
+
+  // Verifica si la variable de entorno existe Y tiene contenido valido
+  const jsonEnv = process.env.GOOGLE_CREDENTIALS_JSON;
+  const tieneJsonEnv =
+    jsonEnv && jsonEnv.trim() !== "" && jsonEnv.trim().startsWith("{");
+
+  if (tieneJsonEnv) {
+    // MODO PRODUCCION (Render): leer de variable de entorno
+    try {
+      const credentialsJSON = JSON.parse(jsonEnv);
+      authConfig = {
+        credentials: credentialsJSON,
+        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+      };
+      log.info("Usando credenciales de Google desde variable de entorno.");
+    } catch (err) {
+      throw new Error(
+        `La variable GOOGLE_CREDENTIALS_JSON no contiene un JSON valido: ${err.message}`
+      );
+    }
+  } else {
+    // MODO DESARROLLO (local): leer del archivo
+    authConfig = {
+      keyFile: config.sheets.credentialsPath,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    };
+  }
+
+  const auth = new google.auth.GoogleAuth(authConfig);
   const authClient = await auth.getClient();
   return google.sheets({ version: "v4", auth: authClient });
 }
