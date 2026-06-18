@@ -15,9 +15,8 @@ import { google } from "googleapis";
  *  1) Responde a la verificacion inicial de Meta (handshake).
  *  2) Cuando alguien toca el boton "Mas informacion", le envia
  *     automaticamente un mensaje de bienvenida.
- *  3) Registra la interaccion en una nueva pestania del Google
- *     Sheet llamada "Respuestas" para que Alejandra haga
- *     seguimiento.
+ *  3) Registra la interaccion en la pestania "Respuestas" del
+ *     Google Sheet para que Alejandra haga seguimiento.
  * ============================================================
  */
 
@@ -38,37 +37,25 @@ app.use(express.json());
 async function getSheetsClient() {
   let authConfig;
 
-  // ===== LOGS DE DIAGNOSTICO (temporales) =====
   const jsonEnv = process.env.GOOGLE_CREDENTIALS_JSON;
-  log.info(`[DEBUG] GOOGLE_CREDENTIALS_JSON existe: ${!!jsonEnv}`);
-  log.info(`[DEBUG] tipo: ${typeof jsonEnv}`);
-  log.info(`[DEBUG] longitud: ${jsonEnv ? jsonEnv.length : 0}`);
-  log.info(`[DEBUG] primeros 5 chars: ${JSON.stringify((jsonEnv || "").substring(0, 5))}`);
-  log.info(`[DEBUG] ultimos 5 chars: ${JSON.stringify((jsonEnv || "").substring((jsonEnv || "").length - 5))}`);
-  // ============================================
-
   const tieneJsonEnv =
     jsonEnv && jsonEnv.trim() !== "" && jsonEnv.trim().startsWith("{");
 
-  log.info(`[DEBUG] tieneJsonEnv: ${tieneJsonEnv}`);
-
   if (tieneJsonEnv) {
-    log.info("[DEBUG] Entrando a modo PRODUCCION (variable de entorno)");
+    // MODO PRODUCCION (Render): leer de variable de entorno
     try {
       const credentialsJSON = JSON.parse(jsonEnv);
       authConfig = {
         credentials: credentialsJSON,
         scopes: ["https://www.googleapis.com/auth/spreadsheets"],
       };
-      log.info("[DEBUG] JSON parseado correctamente");
     } catch (err) {
-      log.error(`[DEBUG] Error parseando JSON: ${err.message}`);
       throw new Error(
         `La variable GOOGLE_CREDENTIALS_JSON no contiene un JSON valido: ${err.message}`
       );
     }
   } else {
-    log.info("[DEBUG] Entrando a modo DESARROLLO (archivo local)");
+    // MODO DESARROLLO (local): leer del archivo
     authConfig = {
       keyFile: config.sheets.credentialsPath,
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
@@ -82,7 +69,6 @@ async function getSheetsClient() {
 
 /**
  * Agrega una fila nueva en la pestania "Respuestas" del Sheet.
- * Si la pestania no existe, no falla: solo registra en consola.
  */
 async function registrarRespuesta({ telefono, nombre, tipo, contenido }) {
   try {
@@ -102,7 +88,6 @@ async function registrarRespuesta({ telefono, nombre, tipo, contenido }) {
     log.ok(`Respuesta registrada en Sheet: ${telefono} (${tipo})`);
   } catch (err) {
     log.warn(`No se pudo registrar en Sheet: ${err.message}`);
-    log.warn(`Asegurate de que exista la pestania "Respuestas" con encabezados.`);
   }
 }
 
@@ -144,7 +129,7 @@ async function enviarMensajeTexto(telefono, texto) {
 
 /**
  * Texto del mensaje automatico de bienvenida cuando alguien toca
- * el boton "Mas informacion". El {{nombre}} se reemplaza al vuelo.
+ * el boton "Mas informacion".
  */
 function construirMensajeBienvenida(nombre) {
   const nombreSeguro = nombre && nombre.trim() !== "" ? nombre : "";
@@ -166,8 +151,7 @@ function construirMensajeBienvenida(nombre) {
 
 /**
  * 1) Verificacion inicial: Meta llama a este endpoint con GET
- *    cuando configuras el webhook. Tenemos que devolverle el
- *    "challenge" para confirmar que somos los duenos.
+ *    cuando configuras el webhook.
  */
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
@@ -189,7 +173,6 @@ app.get("/webhook", (req, res) => {
  */
 app.post("/webhook", async (req, res) => {
   // SIEMPRE respondemos 200 RAPIDO a Meta, para que no reintente.
-  // Lo que tarde el procesamiento lo hacemos despues.
   res.sendStatus(200);
 
   try {
@@ -254,8 +237,6 @@ app.post("/webhook", async (req, res) => {
     }
 
     // -------- 2.B) Estados de entrega --------
-    // Esto NO lo registramos en el Sheet para no llenarlo de ruido,
-    // pero lo mostramos en consola por si quieres depurar.
     const estados = entry?.statuses;
     if (estados && estados.length > 0) {
       for (const s of estados) {
