@@ -38,26 +38,37 @@ app.use(express.json());
 async function getSheetsClient() {
   let authConfig;
 
-  // Verifica si la variable de entorno existe Y tiene contenido JSON valido
+  // ===== LOGS DE DIAGNOSTICO (temporales) =====
   const jsonEnv = process.env.GOOGLE_CREDENTIALS_JSON;
+  log.info(`[DEBUG] GOOGLE_CREDENTIALS_JSON existe: ${!!jsonEnv}`);
+  log.info(`[DEBUG] tipo: ${typeof jsonEnv}`);
+  log.info(`[DEBUG] longitud: ${jsonEnv ? jsonEnv.length : 0}`);
+  log.info(`[DEBUG] primeros 5 chars: ${JSON.stringify((jsonEnv || "").substring(0, 5))}`);
+  log.info(`[DEBUG] ultimos 5 chars: ${JSON.stringify((jsonEnv || "").substring((jsonEnv || "").length - 5))}`);
+  // ============================================
+
   const tieneJsonEnv =
     jsonEnv && jsonEnv.trim() !== "" && jsonEnv.trim().startsWith("{");
 
+  log.info(`[DEBUG] tieneJsonEnv: ${tieneJsonEnv}`);
+
   if (tieneJsonEnv) {
-    // MODO PRODUCCION (Render): leer de variable de entorno
+    log.info("[DEBUG] Entrando a modo PRODUCCION (variable de entorno)");
     try {
       const credentialsJSON = JSON.parse(jsonEnv);
       authConfig = {
         credentials: credentialsJSON,
         scopes: ["https://www.googleapis.com/auth/spreadsheets"],
       };
+      log.info("[DEBUG] JSON parseado correctamente");
     } catch (err) {
+      log.error(`[DEBUG] Error parseando JSON: ${err.message}`);
       throw new Error(
         `La variable GOOGLE_CREDENTIALS_JSON no contiene un JSON valido: ${err.message}`
       );
     }
   } else {
-    // MODO DESARROLLO (local): leer del archivo
+    log.info("[DEBUG] Entrando a modo DESARROLLO (archivo local)");
     authConfig = {
       keyFile: config.sheets.credentialsPath,
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
